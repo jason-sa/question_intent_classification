@@ -3,6 +3,13 @@ import pandas as pd
 import numpy as np
 from sklearn import metrics
 
+import spacy
+nlp = spacy.load('en_core_web_lg') # may need to consider the large vectors model if the vectors perform well
+stopwords = spacy.lang.en.STOP_WORDS
+
+import string
+punctuations = string.punctuation
+
 PATH = '../data/pkl/'
 SUB_PATH = '../data/submissions/'
 TEST_PATH = '../data/test.csv'
@@ -132,24 +139,36 @@ def generate_submissions(model, sub_name):
 
     sub_df.to_csv(SUB_PATH + sub_name + '.csv', index=False)
 
-### Misc functions which will be used some time later
-def clean_text(question):
-    ''' Pre-processeor to clean the Quora questions
-    '''
-    # found 1 example of no space after a question mark, which causes issues with the tokenzier
-    for p in punctuations:
-        question = question.replace(p, ' ')
-    
-    return question
+def cleanup_text(docs):
+    ''' Applies spacy lemmatization, and removes punctuation and stop words.
 
-def spacy_tokenizer(question):
-    ''' Tokenizer that lemmatizes and removes stop words and punctuation
+    docs: array-like
+    Array of documents to be processed.
+
+    retrun: array
+    Array of documents with lemmatization applied.
+
     '''
-    tokens = nlp.tokenizer(question)
-#     tokens = [tok.lemma_.lower().strip() for tok in tokens if tok.lemma_ != '-PRON-']
-#     tokens = [tok for tok in tokens if tok not in punctuations and tok not in spacy_stopwords]     
+    texts = []
+    for doc in nlp.pipe(docs, disable=['parser', 'ner'], batch_size = 10000):
+        tokens = [tok.lemma_.lower().strip() for tok in doc if tok.lemma_ != '-PRON-']
+        tokens = [tok for tok in tokens if tok not in stopwords and tok not in punctuations]
+        tokens = ' '.join(tokens)
+        texts.append(tokens)
     
-    return [token.lemma_ for token in tokens]
+    return np.array(texts)
+
+def create_vectors(docs):
+    ''' Converts an array of documents into spacy GloVe vectors
+
+    docs: array
+    Array of documents to be converted into vectors. This will be the average of the word vectors in the document.
+
+    retun: array (n_docs, 300)
+    Arracy of 300-d document vectors.
+ 
+    '''
+    return [doc.vector for doc in nlp.pipe(docs, disable=['parser', 'ner'])]
 
 ### end misc functions
 if __name__ == '__main__':
