@@ -211,12 +211,12 @@ def calc_cos_sim(stack_array):
                                     first_q[i].reshape(1,-1),
                                     second_q[i].reshape(1,-1)
                 )[0,0]
-                for i in range(split_idx)]
+                for i in range(stack_array.shape[0])]
 
     sim_list = np.array(sim_list).reshape(-1, 1)
     
     return np.hstack([stack_array, sim_list])
-### end misc functions
+
 if __name__ == '__main__':
     l = [1, 2, 3]
     save(l, 'test')
