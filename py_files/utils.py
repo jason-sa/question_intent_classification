@@ -170,6 +170,52 @@ def create_vectors(docs):
     '''
     return [doc.vector for doc in nlp.pipe(docs, disable=['parser', 'ner'])]
 
+def ground_truth_analysis(y, y_probs):
+    ''' Creates a data frame combining the ground truth with the classification model probabilities.
+    
+    y: array
+    Ground truth array classiying the pair of questions as duplicate or not
+    
+    y_probs: array
+    Probability of predicting the pair is a duplicate from a classifier.
+    
+    return: DataFrame
+    DataFrame (gt, prob, diff)
+        - gt: ground truth
+        - prob: classifier probability
+        - diff: difference between gt and prob (ascending = FP, and descending = FN)
+        
+    '''
+    train_probs_df = pd.concat([pd.Series(y), pd.Series(y_probs)], axis=1)
+    train_probs_df = train_probs_df.rename(columns={0: 'gt', 1:'prob'})
+    train_probs_df['diff'] = train_probs_df.loc[:,'gt'] - train_probs_df.loc[:, 'prob']
+    
+    return train_probs_df
+
+def calc_cos_sim(stack_array):
+    ''' Calculates the cosine similarity between each pair of questions after a NMF reduction (or any dimension reduction)
+    
+    stack_array: array
+    Array of vectors (n_pairs, n_dimension). Assumes pairs of questions, and thus the first half of n_dim,
+    represents the first question, and the second half the other question.
+    
+    return: array
+    Array of vectors (n_pairs, n_dimension + 1)
+    
+    '''
+    split_idx = stack_array.shape[1] // 2
+    first_q = stack_array[:, :split_idx]
+    second_q = stack_array[:, split_idx:]
+
+    sim_list = [metrics.pairwise.cosine_similarity(
+                                    first_q[i].reshape(1,-1),
+                                    second_q[i].reshape(1,-1)
+                )[0,0]
+                for i in range(split_idx)]
+
+    sim_list = np.array(sim_list).reshape(-1, 1)
+    
+    return np.hstack([stack_array, sim_list])
 ### end misc functions
 if __name__ == '__main__':
     l = [1, 2, 3]
