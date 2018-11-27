@@ -265,7 +265,6 @@ def calc_cos_sim_stack(stack_array):
     Array of vectors (n_pairs, n_dimension + 1)
     
     '''
-    print(stack_array.shape[0])
     odd_idx = [i for i in range(stack_array.shape[0]) if i % 2 == 1]
     even_idx = [i for i in range(stack_array.shape[0]) if i % 2 == 0]
 
