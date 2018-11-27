@@ -254,6 +254,36 @@ def calc_cos_sim(stack_array):
     
     return np.hstack([stack_array, sim_list])
 
+def calc_cos_sim_stack(stack_array):
+    ''' Calculates the cosine similarity between each pair of questions after a NMF reduction (or any dimension reduction)
+    
+    stack_array: array
+    Array of vectors (n_pairs, n_dimension). Assumes pairs of questions, and thus the first half of n_dim,
+    represents the first question, and the second half the other question.
+    
+    return: array
+    Array of vectors (n_pairs, n_dimension + 1)
+    
+    '''
+    print(stack_array.shape[0])
+    odd_idx = [i for i in range(stack_array.shape[0]) if i % 2 == 1]
+    even_idx = [i for i in range(stack_array.shape[0]) if i % 2 == 0]
+
+    sim_list = [metrics.pairwise.cosine_similarity(stack_array[odd_idx[i]], stack_array[even_idx[i]])[0,0] for i in range(len(odd_idx))]
+    
+    #split_idx = stack_array.shape[1] // 2
+    #first_q = stack_array[:, :split_idx]
+    #second_q = stack_array[:, split_idx:]
+
+    #sim_list = [metrics.pairwise.cosine_similarity(
+    #                                first_q[i].reshape(1,-1),
+    #                                second_q[i].reshape(1,-1)
+    #            )[0,0]
+    #            for i in range(stack_array.shape[0])]
+
+    sim_list = np.array(sim_list).reshape(-1, 1)
+    
+    return sim_list
 if __name__ == '__main__':
     l = [1, 2, 3]
     save(l, 'test')
