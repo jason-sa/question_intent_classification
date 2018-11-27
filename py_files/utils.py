@@ -2,6 +2,8 @@ import dill
 import pandas as pd
 import numpy as np
 from sklearn import metrics
+import re
+from scipy.sparse import issparse
 
 import spacy
 nlp = spacy.load('en_core_web_lg') # may need to consider the large vectors model if the vectors perform well
@@ -32,6 +34,7 @@ def load(obj_name):
     obj_name: string
     Name of the object to be loaded without the extension.
     '''
+
     f = PATH + obj_name + '.pkl'
     return dill.load(open(f, 'rb'))
 
@@ -61,11 +64,13 @@ def unstack_questions(X):
     return: array (n_question, n_features*2)
 
     '''
+    if issparse(X):
+        X = X.toarray()
+
     odd_idx = [i for i in range(len(X)) if i % 2 == 1]
     even_idx = [i for i in range(len(X)) if i % 2 == 0]
     
     return np.hstack([X[odd_idx], X[even_idx]])
-
 
 def log_scores(cv, m_name):
     ''' Calculates the average and standard deviation of the classification errors. The full list in the return documentation. 
@@ -148,6 +153,47 @@ def cleanup_text(docs):
         texts.append(tokens)
     
     return np.array(texts)
+
+def apply_lemma(docs):
+    ''' Applies spacy lemmatization and removes stop words.
+
+    docs: array-like
+    Array of documents to be processed.
+
+    retrun: array
+    Array of documents with lemmatization applied.
+
+    '''
+    texts = []
+    for doc in nlp.pipe(docs, disable=['parser', 'ner'], batch_size = 10000):
+        tokens = [tok.lemma_.lower().strip() for tok in doc if tok.lemma_ != '-PRON-' and tok.lemma_.lower().strip() not in stopwords]
+        tokens = ' '.join(tokens)
+        texts.append(tokens)
+    
+    return np.array(texts)
+
+def clean_questions(X):
+    ''' Cleans the questions by removing,
+            - numbers
+            - math tags and everything in between, i.e. [math]***[/math]
+            - punctuations
+
+    X: array (n_pairs*2,)
+    Assumes the questions are stacked into 1 dimension.
+
+    return: array (n_pairs*2,)
+    
+    '''
+    # replace math tags with blank spaces
+    math_re = re.compile('\[math.*math\]')
+
+    # punctuation 
+    punc = re.compile(f'[{re.escape(string.punctuation)}]')
+
+    # numbers
+    num = re.compile("""\w*\d\w*""")
+
+    return [num.sub('',punc.sub('',math_re.sub('', x))) for x in X]
 
 def create_vectors(docs):
     ''' Converts an array of documents into spacy GloVe vectors
