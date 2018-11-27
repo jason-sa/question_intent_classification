@@ -67,22 +67,17 @@ def unstack_questions(X):
     return np.hstack([X[odd_idx], X[even_idx]])
 
 
-def log_scores(model, X, y, m_name, p_cut = 0.5):
-    ''' Calcuates standard classification metrics and returns a data frame to be combined with other model runs
+def log_scores(cv, m_name):
+    ''' Calculates the average and standard deviation of the classification errors. The full list in the return documentation. 
 
-    model: sklearn type model that implements predict_proba
-
-    X: array (id, question1, question2)
-    Array of question pairs with an id for each pair
-
-    y: array
-    Array identifying 0-1 if the pair is a duplicate or not
+    cv: dict
+    Dictionary of cv results produced from sklearn cross_validate.
 
     m_name: string
     Name of the model to use as the index
 
     return: DataFrame
-    DataFrame (model name, metrics). Metrics currently implemented are, 
+    DataFrame (model name, metrics). Metrics currently implemented and measured on the test fold are, 
         - accuracy
         - precision
         - recall
@@ -91,20 +86,16 @@ def log_scores(model, X, y, m_name, p_cut = 0.5):
         - Log Loss
  
     '''
-    probs = model.predict_proba(X)[:, 1]
-    score = (probs >= p_cut).astype(int)
-    
-    measures = np.array([
-        metrics.accuracy_score(y, score),
-        metrics.precision_score(y, score),
-        metrics.recall_score(y, score),
-        metrics.f1_score(y, score),
-        metrics.roc_auc_score(y, probs),
-        metrics.log_loss(y, probs)
-    ])
-    
+    measures = []
+    for k, v in cv.items():
+        if 'test' in k:
+            measures.append(v.mean() if 'neg' not in k else -1 * v.mean())    
+            measures.append(v.std())    
+    measures = np.array(measures)
+
     return pd.DataFrame(data = measures.reshape(1, -1), 
-                        columns=['accuracy', 'precision', 'recall', 'f1', 'auc', 'log_loss'], 
+                        columns=['avg_accuracy', 'std_accuracy', 'avg_precision', 'std_precision',  'avg_recall', 'std_recall', 
+                                'avg_f1', 'std_f1',  'avg_auc', 'std_auc', 'avg_log_loss', 'std_log_loss'], 
                         index=[m_name])
 
 def generate_submissions(model, sub_name):
