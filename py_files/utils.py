@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn import metrics
 import re
-from scipy.sparse import issparse
 
 import spacy
 nlp = spacy.load('en_core_web_lg') # may need to consider the large vectors model if the vectors perform well
@@ -152,7 +151,7 @@ def cleanup_text(docs):
         tokens = ' '.join(tokens)
         texts.append(tokens)
     
-    return np.array(texts)
+    return texts
 
 def apply_lemma(docs):
     ''' Applies spacy lemmatization and removes stop words.
@@ -170,7 +169,7 @@ def apply_lemma(docs):
         tokens = ' '.join(tokens)
         texts.append(tokens)
     
-    return np.array(texts)
+    return texts
 
 def clean_questions(X):
     ''' Cleans the questions by removing,
