@@ -4,6 +4,9 @@ import numpy as np
 from sklearn import metrics
 import re
 from scipy.sparse import issparse
+from scipy.spatial.distance import pdist
+
+from nltk import ngrams
 
 import spacy
 nlp = spacy.load('en_core_web_lg') # may need to consider the large vectors model if the vectors perform well
@@ -283,6 +286,91 @@ def calc_cos_sim_stack(stack_array):
     sim_list = np.array(sim_list).reshape(-1, 1)
     
     return sim_list
+
+def calc_min_max_avg_distance(v, metric):
+    ''' Calculates the min / max / avg distance of vectors.
+    
+    v: array
+    Array of vectors.
+    
+    metric: string
+    Any valid string metric for scipy.spatial.distance.pdist
+    
+    returns: (min, max, avg) float
+    
+    '''
+    if len(v) <= 1:
+        results = [0] * 3
+    else:
+        dist = pdist(v, metric=metric)
+        results = [np.min(dist), np.max(dist), np.mean(dist)]
+    return results 
+
+def add_min_max_avg_distance_features(X):
+    ''' Engineers min/max/avg distance features between words for a single question.
+    
+    X: array
+    Array of questions
+    
+    return: array (n_questions, 3)
+    Each question will have min, max, and avg word vector distances calculated.
+    '''
+    dist = []
+    for doc in nlp.pipe(X, disable=['parser', 'ner']):
+        vecs = [tok.vector for tok in doc if tok.vector.sum() != 0] # accounts for white space vector of 0
+        vec_dist = calc_min_max_avg_distance(vecs, 'euclidean') 
+        vec_dist += calc_min_max_avg_distance(vecs, 'cosine')
+        vec_dist += calc_min_max_avg_distance(vecs, 'cityblock')
+        
+        dist.append(vec_dist)
+
+    return np.array(dist)
+
+def calc_ngram_similarity(X, n_grams):
+    ''' Calculates the ngram similarity between a pair of questions. Similarity is defined as,
+            2 · ( |S1| / |S1 ∩ S2| + |S2| / |S1 ∩ S2|)^−1
+        where S_i is the ngrams for question i
+        
+        X: array-like (n_pairs*2,)
+        Array of questions with pairs in sequential order.
+        
+        n_grams: list
+        List of n-grams to calculate, i.e. [1, 2, 3]
+        
+        return: array-like (n_pairs, len(n_grams))
+        N-dimensional array of n_gram similarity calculated for the different n_grams.
+        
+    '''
+    counter = 1
+    ngram_sim = []
+    for doc in nlp.pipe(X, disable=['parser', 'ner'], batch_size=10000):
+        tokens = doc.to_array([spacy.attrs.LOWER])
+        if counter % 2 == 1:
+            ngram_q1 = [set(ngrams(tokens, i, pad_right=True)) for i in n_grams]
+        else:
+            ngram_q2 = [set(ngrams(tokens, i, pad_right=True)) for i in n_grams]
+            
+            doc_ngram_sim = []
+            for i in range(len(ngram_q1)):
+                try:
+                    s1 = len(ngram_q1[i]) / len(ngram_q1[i].intersection(ngram_q2[i]))
+                except:
+                    s1 = 0
+
+                try:
+                    s2 = len(ngram_q2[i]) / len(ngram_q1[i].intersection(ngram_q2[i]))
+                except:
+                    s2 = 0
+
+                if s1 == 0 and s2 == 0:
+                    doc_ngram_sim.append(0)
+                else:
+                    doc_ngram_sim.append(2 * (s1 + s2)**-1)
+            ngram_sim.append(doc_ngram_sim)
+        
+        counter += 1
+    return np.array(ngram_sim)
+
 if __name__ == '__main__':
     l = [1, 2, 3]
     save(l, 'test')
