@@ -196,7 +196,7 @@ def clean_questions(X):
     # numbers
     num = re.compile("""\w*\d\w*""")
 
-    return [num.sub('',punc.sub('',math_re.sub('', x))) for x in X]
+    return [num.sub('',punc.sub('',math_re.sub('', x))).lower() for x in X]
 
 def create_vectors(docs):
     ''' Converts an array of documents into spacy GloVe vectors
