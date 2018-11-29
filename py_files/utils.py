@@ -11,6 +11,7 @@ from nltk import ngrams
 import spacy
 nlp = spacy.load('en_core_web_lg') # may need to consider the large vectors model if the vectors perform well
 stopwords = spacy.lang.en.STOP_WORDS
+stopwords = set(stopwords)
 
 import string
 punctuations = string.punctuation
@@ -157,11 +158,14 @@ def cleanup_text(docs):
     
     return texts
 
-def apply_lemma(docs):
+def apply_lemma(docs, incl_stop_words=False):
     ''' Applies spacy lemmatization and removes stop words.
 
     docs: array-like
     Array of documents to be processed.
+
+    incl_stop_words: boolean
+    Boolean indicating whether or not to strip stop words in the lemmatization process
 
     retrun: array
     Array of documents with lemmatization applied.
@@ -169,7 +173,7 @@ def apply_lemma(docs):
     '''
     texts = []
     for doc in nlp.pipe(docs, disable=['parser', 'ner'], batch_size = 10000):
-        tokens = [tok.lemma_.lower().strip() for tok in doc if tok.lemma_ != '-PRON-' and tok.lemma_.lower().strip() not in stopwords]
+        tokens = [tok.lemma_.lower().strip() for tok in doc if tok.lemma_ != '-PRON-' and (incl_stop_words or tok.lemma_.lower().strip() not in stopwords)]
         tokens = ' '.join(tokens)
         texts.append(tokens)
     
