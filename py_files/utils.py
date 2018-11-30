@@ -188,6 +188,9 @@ def clean_questions(X, excl_num=True):
     X: array (n_pairs*2,)
     Assumes the questions are stacked into 1 dimension.
 
+    excl_num: boolean (optional, default True)
+    Boolean indicating whether or not to strip numbers from the question.
+
     return: array (n_pairs*2,)
     
     '''
