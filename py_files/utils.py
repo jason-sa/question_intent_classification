@@ -391,6 +391,53 @@ def calc_ngram_similarity(X, n_grams):
         counter += 1
     return np.array(ngram_sim)
 
+def log_keras_scores(y_true, y_pred, model_name, p_cut = 0.5):
+    ''' Logs scores from a neural net model. The same scores as the classification model are logged.
+    
+    y_true: array
+    Actual labels
+    
+    y_pred: array
+    Predict probabilities
+    
+    model_name: string
+    Name of the model run
+    
+    p_cut: float (optional, default=0.5)
+    Probability cut-off for confusion matrix metrics
+    
+    return: DataFrame
+    DataFrame of ['avg_accuracy', 'std_accuracy', 'avg_precision', 'std_precision',
+       'avg_recall', 'std_recall', 'avg_f1', 'std_f1', 'avg_auc', 'std_auc',
+       'avg_log_loss', 'std_log_loss'].
+       
+       The std_ values will all be set to 0.
+       
+    '''
+    
+    cols = ['avg_accuracy', 'std_accuracy', 'avg_precision', 'std_precision',
+       'avg_recall', 'std_recall', 'avg_f1', 'std_f1', 'avg_auc', 'std_auc',
+       'avg_log_loss', 'std_log_loss']
+    
+    y_score = (y_pred >= p_cut).astype(int)
+    scores = [
+        metrics.accuracy_score(y_true, y_score),
+        0,
+        metrics.precision_score(y_true, y_score),
+        0,
+        metrics.recall_score(y_true, y_score),
+        0,
+        metrics.f1_score(y_true, y_score),
+        0,
+        metrics.roc_auc_score(y_true, y_pred),
+        0,
+        metrics.log_loss(y_true, y_score),
+        0
+    ]
+    scores = np.array(scores).reshape(1, -1)
+
+    return pd.DataFrame(data = scores, columns= cols, index= [model_name] )
+
 if __name__ == '__main__':
     X_train = load('X_train')
     X_train = stack_questions(X_train)
