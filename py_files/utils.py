@@ -318,21 +318,29 @@ def calc_min_max_avg_distance(v, metric):
         results = [np.min(dist), np.max(dist), np.mean(dist)]
     return results 
 
-def add_min_max_avg_distance_features(X):
+def add_min_max_avg_distance_features(X, dist_metrics=['euclidean', 'cosine', 'cityblock']):
     ''' Engineers min/max/avg distance features between words for a single question.
     
     X: array
     Array of questions
     
+    dist: list
+    List of valid distances to be passed to scipy.spatial.distance.pdist
+
     return: array (n_questions, 3)
     Each question will have min, max, and avg word vector distances calculated.
     '''
     dist = []
     for doc in nlp.pipe(X, disable=['parser', 'ner']):
         vecs = [tok.vector for tok in doc if tok.vector.sum() != 0] # accounts for white space vector of 0
-        vec_dist = calc_min_max_avg_distance(vecs, 'euclidean') 
-        vec_dist += calc_min_max_avg_distance(vecs, 'cosine')
-        vec_dist += calc_min_max_avg_distance(vecs, 'cityblock')
+        
+        vec_dist = [] 
+        for metric in dist_metrics:
+            vec_dist += calc_min_max_avg_distance(vecs, metric)
+        
+        #vec_dist = calc_min_max_avg_distance(vecs, 'euclidean') 
+        #vec_dist += calc_min_max_avg_distance(vecs, 'cosine')
+        #vec_dist += calc_min_max_avg_distance(vecs, 'cityblock')
         
         dist.append(vec_dist)
 
@@ -384,7 +392,7 @@ def calc_ngram_similarity(X, n_grams):
     return np.array(ngram_sim)
 
 if __name__ == '__main__':
-    l = [1, 2, 3]
-    save(l, 'test')
-    l_new = load('test')
-    print(l_new == l)
+    X_train = load('X_train')
+    X_train = stack_questions(X_train)
+    X_train = clean_questions(X_train, False)
+    print(add_min_max_avg_distance_features(X_train[:10], dist_metrics=['kulsinski','jaccard']))
