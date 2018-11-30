@@ -179,7 +179,7 @@ def apply_lemma(docs, incl_stop_words=False):
     
     return texts
 
-def clean_questions(X):
+def clean_questions(X, excl_num=True):
     ''' Cleans the questions by removing,
             - numbers
             - math tags and everything in between, i.e. [math]***[/math]
@@ -200,7 +200,12 @@ def clean_questions(X):
     # numbers
     num = re.compile("""\w*\d\w*""")
 
-    return [num.sub('',punc.sub('',math_re.sub('', x))).lower() for x in X]
+    if excl_num:
+        results = [num.sub('',punc.sub('',math_re.sub('', x))).lower() for x in X]
+    else:
+        results = [punc.sub('',math_re.sub('', x)).lower() for x in X]
+   
+    return results 
 
 def create_vectors(docs):
     ''' Converts an array of documents into spacy GloVe vectors
