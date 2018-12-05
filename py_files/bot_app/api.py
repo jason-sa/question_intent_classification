@@ -83,13 +83,13 @@ def ngram_similarity(q_token, token_db,  n_grams=[1, 2, 3]):
         
     return np.array(ngram_sim)
 
-def ask_question(question):
+def ask_question(question, n):
     
     logging.info(f'Processing question: {question}')
     question_clean = utils.clean_questions([question]) ## returns an array
     ## if question is a duplicate after cleaning, then return the answer
     if question_clean[0] in cleaned_questions:
-        return question_clean
+        return zip(question_clean[0], 1)
     
     ## else run the model
     else:    
@@ -134,14 +134,13 @@ def ask_question(question):
         feature_space = np.hstack([clean_n_gram, clean_single_features, lemma_n_gram, lemma_single_features])
         probs = xgb.predict_proba(feature_space)[:, 1]
 
-        top = probs.argsort()[-3:]
+        top = probs.argsort()[-n:]
         top_question = np.array(qa_df.iloc[top]).reshape(len(top), -1)
-        top_probs = probs[top].reshape(-1, 1)
+        top_probs = probs[top].reshape(len(top), 1)
 
-#     return None
-#     return pd.DataFrame(np.hstack([top_question, top_probs]))
-        return feature_space, pd.DataFrame(np.hstack([top_question, top_probs]))
+        return zip(top_question, top_probs)
 
 if __name__ == '__main__':
-    features, top_results = ask_question('what causes earthquakes')
-    print(top_results)
+    results = ask_question('what causes earthquakes')
+    for a, p in results:
+        print(a, p)
