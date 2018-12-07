@@ -26,7 +26,7 @@ qa_df = utils.load('qa_df')
 logging.info('Loading models...')
 
 ## load best fitted model
-xgb = utils.load('xgb_FINAL_model')
+xgb = utils.load('xgb_FINAL_model_question_swapped')
 
 # build features on the cleaned text only
 clean_text_features = Pipeline(
@@ -88,59 +88,76 @@ def ask_question(question, n):
     logging.info(f'Processing question: {question}')
     question_clean = utils.clean_questions([question]) ## returns an array
     ## if question is a duplicate after cleaning, then return the answer
-    if question_clean[0] in cleaned_questions:
-        return zip(question_clean[0], 1)
+    # if question_clean[0] in cleaned_questions:
+    #     return zip(question_clean[0], 1)
     
     ## else run the model
-    else:    
-        logging.info('Building feature set 1')
-        ## Feature Set 1 -- clean text similarity
-        ## create the tokens for the question
-        doc = utils.nlp(question_clean[0])
-        question_tokens = doc.to_array([utils.spacy.attrs.LOWER])
-        clean_n_gram = ngram_similarity(question_tokens, clean_tokens)
+    # else:    
+    logging.info('Building feature set 1')
+    ## Feature Set 1 -- clean text similarity
+    ## create the tokens for the question
+    doc = utils.nlp(question_clean[0])
+    question_tokens = doc.to_array([utils.spacy.attrs.LOWER])
+    clean_n_gram = ngram_similarity(question_tokens, clean_tokens)
 
-        logging.info('Building feature set 2')
-        ## Feature Set 2 -- Clean distance features
-        # union single question features
-        question_features = clean_text_features.transform([question]) 
-        clean_single_features = np.hstack([clean_question_features, 
-                                           np.repeat(question_features, clean_question_features.shape[0], axis=0)])
-        
-
-        logging.info('Building feature set 3')
-        ## Feature Set 3 -- Lemma text similarity
-        # calculate n_gram similarity for the cleaned and lemmatized question
-        question_lemma = utils.apply_lemma(question_clean)
-        doc = utils.nlp(question_lemma[0])
-        question_tokens = doc.to_array([utils.spacy.attrs.LOWER])
-        lemma_n_gram = ngram_similarity(question_tokens, lemma_tokens)
-
-
-        logging.info('Building feature set 4')
-        ## Feature Set 4 -- Lemma distance features
-        # union single question features
-        question_features = lemma_text_features.transform([question]) 
-        lemma_single_features = np.hstack([lemma_question_features, 
-                                           np.repeat(question_features, lemma_question_features.shape[0], axis=0)])
-
-    ### Transform through the whole pipeline
-#     df_cleaned_questions['question2'] = question
+    logging.info('Building feature set 2')
+    ## Feature Set 2 -- Clean distance features
+    # union single question features
+    question_features = clean_text_features.transform([question]) 
+    clean_single_features = np.hstack([clean_question_features, 
+                                        np.repeat(question_features, clean_question_features.shape[0], axis=0)])
     
+
+    logging.info('Building feature set 3')
+    ## Feature Set 3 -- Lemma text similarity
+    # calculate n_gram similarity for the cleaned and lemmatized question
+    question_lemma = utils.apply_lemma(question_clean)
+    doc = utils.nlp(question_lemma[0])
+    question_tokens = doc.to_array([utils.spacy.attrs.LOWER])
+    lemma_n_gram = ngram_similarity(question_tokens, lemma_tokens)
+
+
+    logging.info('Building feature set 4')
+    ## Feature Set 4 -- Lemma distance features
+    # union single question features
+    question_features = lemma_text_features.transform([question]) 
+    lemma_single_features = np.hstack([lemma_question_features, 
+                                        np.repeat(question_features, lemma_question_features.shape[0], axis=0)])
+
+### Transform through the whole pipeline
+#     df_cleaned_questions['question2'] = question
+
 #     feature_space = feature_pipe.transform(df_cleaned_questions[:5000])
 
-        logging.info('Making prediction')
-        # make the prediction
-        feature_space = np.hstack([clean_n_gram, clean_single_features, lemma_n_gram, lemma_single_features])
-        probs = xgb.predict_proba(feature_space)[:, 1]
+    logging.info('Making prediction')
+    # combine the entire features space
+    feature_space = np.hstack([ clean_n_gram, 
+                                clean_single_features, 
+                                lemma_n_gram, 
+                                lemma_single_features])
 
-        top = probs.argsort()[-n:]
-        top_question = np.array(qa_df.iloc[top]).reshape(len(top), -1)
-        top_probs = probs[top].reshape(len(top), 1)
+    # make the prediction
+    probs = xgb.predict_proba(feature_space)[:, 1]
 
-        return zip(top_question, top_probs)
+    top = probs.argsort()[-n:]
+    top_question = np.array(qa_df.iloc[top]).reshape(len(top), -1)
+    top_probs = probs[top].reshape(len(top), 1)
+
+    return zip(top_question, top_probs, feature_space[top])
 
 if __name__ == '__main__':
-    results = ask_question('what causes earthquakes')
-    for a, p in results:
-        print(a, p)
+    print('Welcome to the q&a bot!\nPlease enter your question. Once you are done enter "exit"')
+    q = input('Question: ')
+    a = input('How many answers? ')
+
+    while q != 'exit':
+        results = ask_question(q, int(a))
+        print('\n\nResults:\n')
+        for a, p, f in results:
+            print(a, p, f)
+            print()
+
+        print('\n\n')
+        q = input('Question: ')
+        a = input('How many answers? ')
+
