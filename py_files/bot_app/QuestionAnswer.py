@@ -23,14 +23,16 @@ class QuestionAnswer(threading.Thread):
         logging.info(f'Calling the url {self.response_url}')
 
         # call the api to generate answers
-        results = ask_question(self.question, 5)
+        results = ask_question(self.question, 3)
 
         # format the response into json
         counter = 1
         answers = ''
         for a, p in results:
             logging.info(p)
-            answers += f'{counter}. {a} \n\tQuestion: {a} \n\tConfidence: {p[0]:.3f}\n'
+            answers += (f'{counter}. *Answer:* {a[0]} \n\t' + 
+                       f'*Confidence:* {p[0]*100:.1f}%\n\t' + 
+                       f'*Simiar Question:* {a[1]} \n\n')
             counter += 1
         
         json = {

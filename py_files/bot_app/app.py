@@ -85,7 +85,7 @@ def answer_question():
     question_answerer = QuestionAnswer(question, url)
     question_answerer.start()
 
-    return make_response(f'Thinking...{question}', 200, {'X-Slack-NoRetry': 1})
+    return make_response(f':thinking_face: :thought_balloon:...({question})', 200, {'X-Slack-NoRetry': 1})
 
 @app.route("/listening", methods=["GET", "POST"])
 def hears():
