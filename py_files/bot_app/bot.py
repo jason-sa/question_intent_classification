@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Python Slack Bot class for use with the pythOnBoarding app
-"""
 import logging
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-# logging.info('Starting app...')
 
 import os
 import message ## custom class
@@ -56,21 +51,3 @@ class Bot(object):
                                             token=self.token
                                             )
         logging.info(f'welcome_message: {post_message}')
-
-    def send_thinking(self, channel):
-        """
-        Sends a thinking message
-
-        Parameters
-        ----------
-        channel : str
-            id of the Slack channel associated with the incoming message        
-        """
-        post_message = self.client.api_call("chat.postMessage",
-                                            channel=channel,
-                                            username=self.name,
-                                            icon_emoji=self.emoji,
-                                            text="Thinking...",
-                                            token=self.token
-                                            )
-        logging.info(f'send_thinking: {post_message}')

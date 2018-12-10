@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-A routing layer for the onboarding bot tutorial built using
-[Slack's Events API](https://api.slack.com/events-api) in Python
-"""
 import logging
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
@@ -11,8 +6,6 @@ logging.info('Starting app...')
 import json
 import bot
 from flask import Flask, request, make_response, render_template
-import requests
-import time
 
 from QuestionAnswer import QuestionAnswer
 

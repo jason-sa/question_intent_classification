@@ -1,18 +1,28 @@
 import logging
 import requests
+import threading
+from api import ask_question
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-import threading
-import time
-
-from api import ask_question
 
 class QuestionAnswer(threading.Thread):
     """ 
     Threading subclass to run the question and answer prediction. 
-    The current process can take up to 10 seconds.
+    The current prediction process can take up to 10 seconds.
     """
     def __init__(self, question, response_url):
+        """
+        Initalizes
+
+        Parameters:
+        ----------
+
+        question: string
+            Question to look-up similar questions
+        
+        response_url: string
+            Response URL provided by Slack API to send the results back once completed
+        """
         super().__init__()
         logging.info('created the QA object')
         self.question = question
@@ -41,20 +51,3 @@ class QuestionAnswer(threading.Thread):
 
         # send the message to the post back url
         requests.post(self.response_url, json = json)
-
-    def _format_json(results):
-        """
-        Formats the results of the ML model into a json response
-
-        Parameters:
-        -----------
-        results: zip
-            Zip of (answer, probability). The probability represents how likely the asked question and 
-            the actual question are similar.
-
-        returns: dict
-            Returns formatted dictionary of the answers
-        """
-
-        return json
-
