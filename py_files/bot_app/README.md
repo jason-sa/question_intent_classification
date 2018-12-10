@@ -2,6 +2,8 @@
 
 ## Installation 
 
+(need to update)
+
 ## Demo
 
 A gif of the Slack bot in action.
