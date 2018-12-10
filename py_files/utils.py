@@ -285,16 +285,6 @@ def calc_cos_sim_stack(stack_array):
 
     sim_list = [metrics.pairwise.cosine_similarity(stack_array[odd_idx[i]], stack_array[even_idx[i]])[0,0] for i in range(len(odd_idx))]
     
-    #split_idx = stack_array.shape[1] // 2
-    #first_q = stack_array[:, :split_idx]
-    #second_q = stack_array[:, split_idx:]
-
-    #sim_list = [metrics.pairwise.cosine_similarity(
-    #                                first_q[i].reshape(1,-1),
-    #                                second_q[i].reshape(1,-1)
-    #            )[0,0]
-    #            for i in range(stack_array.shape[0])]
-
     sim_list = np.array(sim_list).reshape(-1, 1)
     
     return sim_list
@@ -337,10 +327,6 @@ def add_min_max_avg_distance_features(X, dist_metrics=['euclidean', 'cosine', 'c
         vec_dist = [] 
         for metric in dist_metrics:
             vec_dist += calc_min_max_avg_distance(vecs, metric)
-        
-        #vec_dist = calc_min_max_avg_distance(vecs, 'euclidean') 
-        #vec_dist += calc_min_max_avg_distance(vecs, 'cosine')
-        #vec_dist += calc_min_max_avg_distance(vecs, 'cityblock')
         
         dist.append(vec_dist)
 
