@@ -53,7 +53,7 @@ Let’s consider these two questions.
 
 Each word in each question can be mapped to a word embedding, and then distances calculated. Euclidean, cosine, and manhattan distances were calculated, and the comparison of the two questions is below.
 
-![Two question chart](img/two_question_bar_chart.png)
+![Two question chart](docs/img/two_question_bar_chart.png)
 
 Now we can add a third question, unseen by the model, and see how a classification model can start to learn semantic similarities between two questions. The third question is,
 
@@ -61,7 +61,7 @@ Now we can add a third question, unseen by the model, and see how a classificati
 
 The updated graph is now below,
 
-![Three question chart](img/three_question_bar_chart.png)
+![Three question chart](docs/img/three_question_bar_chart.png)
 
 ## Model Selection and Results
 
@@ -93,13 +93,13 @@ I trained many models with different features. A summary of those models can be 
 
 Ultimately, Random Forrest and Gradient Boosted models with the features described within this document performed the best, and both were hyper-tuned. I hyper-tuned utilizing `BayesSearchCV` from `skopt`, and utilized validation AUC to select the `xgboost` labeled as `xgb_hypertuned_dup_features` in the above table. The ROC curve of the held-out test data is below, and the model scored an 0.88 AUC on the test data, thus a little better than the avg validation AUC.
 
-![ROC Curve](img/roc_curve.png)
+![ROC Curve](docs/img/roc_curve.png)
 
 ## JasonBot (Q&A Slack bot)
 
 I applied the trained model to a question and answer Slack bot application. The underlying assumption for the application is that some historical questions have already been asked and answered. This data originated from [MS MARCO](http://www.msmarco.org/dataset.aspx). The Slack bot was deployed on the Metis Community Channel and the `/q` command was enabled to receive any question and respond with the top 3 answers. In addition to the answers, the similar question and confidence level are returned. A demo of the bot is below or [here](img/jason_bot_demo.mp4)
 
-![Bot video](img/jason_bot_video.gif)
+![Bot video](docs/img/jason_bot_video.gif)
 
 ## Future Work
 
